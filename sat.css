@@ -1,0 +1,464 @@
+:root {
+    --accent: #00f2ff;
+    --accent-dim: rgba(0, 242, 255, 0.4);
+    --bg-dark: #020408;
+    --panel-bg: rgba(10, 15, 25, 0.6);
+    --border: rgba(255, 255, 255, 0.1);
+    --font-main: 'Outfit', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100dvh; /* Dynamic Viewport Height per evitar les barres negres al mòbil */
+    background: var(--bg-dark);
+    color: #fff;
+    font-family: var(--font-main);
+    overflow: hidden;
+    position: fixed; /* Evita scrolls accidentals de pàgina */
+    inset: 0;
+    touch-action: none; /* Deixa el control total a Cesium */
+}
+
+/* Subtle Vignette for depth, no scanlines */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+    z-index: 50;
+}
+
+#cesiumContainer {
+    width: 100%;
+    height: 100%;
+}
+
+/* Compact Mission Header */
+#hud-header {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* Pro Mission Info Badge */
+.mission-info {
+    background: rgba(10, 15, 25, 0.7);
+    padding: 8px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    backdrop-filter: blur(20px);
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.05); /* Subtle cyber glow */
+}
+
+.mission-logo {
+    height: 24px;
+    object-fit: contain;
+    padding-right: 12px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mission-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.mission-text h1 {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.mission-text p {
+    margin: 2px 0 0 0;
+    font-size: 0.5rem;
+    opacity: 0.5;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Toggleable Control Panel */
+#control-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 280px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: blur(25px);
+    z-index: 100;
+    padding: 20px;
+    pointer-events: auto;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+#control-panel.hidden {
+    transform: translateX(320px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.panel-section {
+    margin-bottom: 20px;
+}
+
+.panel-label {
+    font-size: 0.6rem;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.panel-label::after {
+    content: '';
+    height: 1px;
+    flex-grow: 1;
+    background: var(--border);
+}
+
+.control-row {
+    margin-bottom: 12px;
+}
+
+.control-row label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    margin-bottom: 6px;
+    color: rgba(255,255,255,0.6);
+}
+
+.control-row span.val {
+    color: #fff;
+    font-family: var(--font-mono);
+}
+
+select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    outline: none;
+}
+
+input[type="range"] {
+    width: 100%;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    height: 2px;
+    border-radius: 1px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-dim);
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    transition: 0.2s;
+}
+
+.nav-btn:hover {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+}
+
+/* Ultra-Compact Timeline */
+#timeline-hud {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 800px;
+    background: var(--panel-bg);
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+#play-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--accent);
+    border: none;
+    color: #000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+
+#play-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.slider-box {
+    flex-grow: 1;
+}
+
+input[type="range"] {
+    width: 100%;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.05);
+    height: 1px;
+    border-radius: 1px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+}
+
+.time-readout {
+    min-width: 120px;
+    text-align: right;
+    border-left: 1px solid var(--border);
+    padding-left: 15px;
+}
+
+#time-val {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    display: block;
+    line-height: 1;
+}
+
+#date-val {
+    font-size: 0.5rem;
+    opacity: 0.4;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+    display: block;
+}
+
+/* Toggle Button */
+#menu-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 36px;
+    height: 36px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    z-index: 101;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+/* Loading HUD */
+#loading-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.loader-box {
+    width: 120px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.loader-bar {
+    width: 30%;
+    height: 100%;
+    background: var(--accent);
+    position: absolute;
+    animation: loadMove 1.5s infinite;
+}
+
+@keyframes loadMove {
+    0% { left: -30%; }
+    100% { left: 130%; }
+}
+
+.cesium-viewer-bottom {
+    display: none !important;
+}
+
+/* Tile Downloading HUD */
+#tile-status {
+    margin-top: 6px;
+    background: rgba(0, 242, 255, 0.05);
+    border: 1px solid var(--accent-dim);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.55rem;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 1px;
+    backdrop-filter: blur(10px);
+    transition: opacity 0.3s;
+}
+
+#tile-status.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.3; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 8px var(--accent); }
+}
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 768px) {
+    #hud-header {
+        top: 15px;
+        left: 15px;
+        right: 15px; /* Take full width on mobile or align center */
+    }
+
+    .mission-info {
+        padding: 8px 12px;
+        gap: 10px;
+    }
+
+    .mission-logo {
+        height: 24px;
+        padding-right: 10px;
+    }
+
+    .mission-text h1 {
+        font-size: 0.7rem;
+        letter-spacing: 1px;
+    }
+
+    .mission-text p {
+        font-size: 0.45rem;
+    }
+
+    #control-panel {
+        top: 85px;
+        bottom: auto;
+        left: 20px;
+        right: 20px;
+        width: auto;
+        max-height: 70vh;
+        overflow-y: auto;
+        transform: translateX(0);
+    }
+
+    #control-panel.hidden {
+        transform: translateX(120%);
+    }
+
+    #menu-toggle {
+        top: 15px;
+        right: 15px;
+        background: var(--accent);
+        color: #000;
+    }
+
+    #timeline-hud {
+        bottom: 35px; /* Deixem el marge demanat */
+        top: auto;
+        width: calc(100% - 40px);
+        left: 20px;
+        transform: none;
+        padding: 10px 14px;
+        gap: 12px;
+        background: rgba(10, 15, 25, 0.85); /* Mes opac perquè es vegi bé sobre el mapa */
+    }
+
+    #play-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .time-readout {
+        min-width: 80px;
+        padding-left: 10px;
+    }
+
+    #time-val {
+        font-size: 0.85rem;
+    }
+
+    #date-val {
+        display: none; /* Hide date on small screens to save space */
+    }
+
+    .mission-info {
+        pointer-events: none; /* Let clicks pass to map on mobile info bar */
+    }
+}

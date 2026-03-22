@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ca">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>METEOSAT MTG-I1 | GEO-TERMINAL</title>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.108/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;600;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="sat.css">
+</head>
+
+<body>
+
+    <div id="loading-screen">
+        <div class="loader-box">
+            <div class="loader-bar"></div>
+        </div>
+        <p id="loading-txt" style="margin-top:15px; letter-spacing: 4px; font-size: 0.5rem; color: #fff; opacity: 0.5;">INITIALIZING MTG-I1 SYNC</p>
+    </div>
+
+    <div id="hud-header">
+        <div class="mission-info">
+            <img src="https://app.projecte4estacions.com/images/logo_p4e_2023_h_blanc_200.png" alt="Projecte 4 Estacions" class="mission-logo">
+            <div class="mission-text">
+                <h1>MTG-I1 MISSION</h1>
+                <p id="status-txt">Instrument: FCI-FD // Status: Synchronized</p>
+            </div>
+        </div>
+        <div id="tile-status" class="hidden">
+            <span class="pulse-dot"></span>
+            DOWNLOADING <span id="tile-count">0</span> TILES
+        </div>
+    </div>
+
+    <button id="menu-toggle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18" />
+        </svg>
+    </button>
+
+    <div id="control-panel">
+        <div class="panel-section">
+            <div class="panel-label">DATA PRODUCT</div>
+            <select id="layer-select">
+                <optgroup label="SATELLITE DATA (EUMETSAT)">
+                    <option value="mtg_fd:rgb_geocolour">GeoColour (Natural/Night IR)</option>
+                    <option value="mtg_fd:rgb_truecolour">True Color RGB</option>
+                    <option value="mtg_fd:ir105_hrfi">Infrared 10.5µm (HRFI)</option>
+                    <option value="mtg_fd:ir105_hrfi|mtg_fd:mtg_fd_ir105_hrfi_grayscale">Infrared 10.5µm (Grayscale)</option>
+                    <option value="mtg_fd:ir105_hrfi|mtg_fd:mtg_fd_ir105_hrfi_style_01">Infrared 10.5µm (Style 01)</option>
+                    <option value="mtg_fd:ir105_hrfi|mtg_fd:mtg_fd_ir105_hrfi_style_02">Infrared 10.5µm (Style 02)</option>
+                    <option value="mtg_fd:vis06_hrfi">Visible 0.6µm (High Res)</option>
+                    <option value="mtg_fd:li_afa">Accumulated Flash Area (Lightning)</option>
+                    <option value="mtg_fd:rgb_cloudphase">Cloud Phase RGB</option>
+                    <option value="mtg_fd:rgb_cloudtype">Cloud Type RGB</option>
+                    <option value="mtg_fd:rgb_dust">Dust RGB</option>
+                    <option value="mtg_fd:rgb_firetemperature">Fire Temperature RGB</option>
+                    <option value="mtg_fd:rgb_fog">Fog / Low Clouds RGB</option>
+                    <option value="mtg_fd:rgb_snow">Snow RGB</option>
+                </optgroup>
+                <optgroup label="METEOROLOGICAL RADAR">
+                    <option value="radar_global">Global Precipitation Radar</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="panel-section">
+            <label style="display: flex; align-items: center; cursor: pointer; color: #cbd5e1; font-weight: 500;">
+                <input type="checkbox" id="radar-overlay" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer; accent-color: #38bdf8;">
+                Overlay Radar Simultani
+            </label>
+        </div>
+
+        <div class="panel-section">
+            <div class="panel-label">LAYERS</div>
+            <div class="control-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 0;">
+                <input type="checkbox" id="borders-toggle" style="width: auto; accent-color: var(--accent);">
+                <label style="margin-bottom: 0; opacity: 1;">Show Borders Overlay</label>
+            </div>
+            <div class="control-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 0; margin-top: 8px;">
+                <input type="checkbox" id="hd-toggle" style="width: auto; accent-color: var(--accent);">
+                <label style="margin-bottom: 0; opacity: 1;">Force 4K/UHD Resolution</label>
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <div class="panel-label">NAVIGATION</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <button class="nav-btn" onclick="goTo('FD')">Full Disk</button>
+                <button class="nav-btn" onclick="goTo('EU')">Europe</button>
+                <button class="nav-btn" onclick="goTo('CAT')">Catalonia</button>
+                <button class="nav-btn" onclick="goTo('AF')">Africa</button>
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <div class="panel-label">TEMPORAL SCAN</div>
+            <div class="control-row">
+                <label>Lookback Window <span class="val" id="hour-val">3h</span></label>
+                <input type="range" id="hour-slider" min="1" max="24" value="3">
+            </div>
+            <div class="control-row">
+                <label>Playback Velocity <span class="val" id="speed-val">0.8s</span></label>
+                <input type="range" id="speed-slider" min="50" max="2500" step="50" value="800">
+            </div>
+        </div>
+
+        <p style="font-size: 0.5rem; opacity: 0.4; text-align: center; margin-top: 5px; font-family: var(--font-mono);">EUMETSAT VIEW SERVER DATA</p>
+    </div>
+
+    <div id="cesiumContainer"></div>
+
+    <div id="timeline-hud">
+        <button id="play-btn">
+            <svg id="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+            </svg>
+        </button>
+        <div class="slider-box">
+            <input type="range" id="time-slider" min="0" max="0" value="0">
+        </div>
+        <div class="time-readout">
+            <span id="time-val">--:--</span>
+            <span id="date-val">-- --- ----</span>
+        </div>
+    </div>
+
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.108/Build/Cesium/Cesium.js"></script>
+    <script src="sat.js"></script>
+</body>
+
+</html>
